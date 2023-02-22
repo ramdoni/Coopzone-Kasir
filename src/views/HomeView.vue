@@ -1,6 +1,7 @@
 <script>
 import ModalBayarTunai from "../components/ModalBayarTunai.vue";
 import ModalBayarKredit from "../components/ModalBayarKredit.vue";
+import ModalEditProduct from "../components/Kasir/ModalEditProduct.vue";
 import {openModal,closeModal} from "jenesius-vue-modal";
 import axios from 'axios';
 
@@ -15,7 +16,7 @@ export default {
       showModalKredit:false,
       showModalTunai:false,
       qty: 1,
-      tabIndex: 0,
+      tabIndex: null,
       listProduct:[],
       dataProduct:[],
       data: {
@@ -34,58 +35,91 @@ export default {
       if(isDone){
         this.dataProduct = [];this.total=0;this.total_qty=0;
         closeModal();
+        this.onFocusProduct();
+        this.$notify({
+          title: "Notifikasi",
+          text: "Transaksi berhasil",
+          type: 'success',
+        });
       }
     });
+
+    /**
+     * ketika ada perubahan product qty
+     */
+    this.emitter.on("modal-edit-product", data => {
+      console.log(data);
+      for(let i=0; i<this.dataProduct.length; i++){
+        if(this.dataProduct[i]['id']==data.id){
+          this.dataProduct[i]['qty_beli'] = data.qty_beli;
+        }
+      }
+      closeModal();
+      this.focusKeyboard = null;
+    })
   },
   created () {
     this.loadProduct();
   },
-
   methods:{
     clearInput() {
       this.barcode = '';
     },
     modalTunai(){
       openModal(ModalBayarTunai,{title: 'Tunai',total: this.total,products:this.dataProduct});
-      setTimeout(function(){
-        document.getElementById("uang_tunai").focus();
-      });
     },
     modalKredit(){
       openModal(ModalBayarKredit,{title: 'Kredit',total: this.total,products:this.dataProduct});
+    },
+    onFocusProduct(){
+      this.barcode = "";
+      var barcodeId = document.getElementById("barcode");
+      barcodeId.focus();
       setTimeout(function(){
-        document.getElementById("no_anggota").focus();
+        barcodeId.value = "";
       });
+      this.focusKeyboard='F4';
     },
     onKeydown(e){
+      if(e.key=='Escape' && this.focusKeyboard=='F4'){
+        let e = [...document.querySelectorAll('[tabindex]')];
+        if(e.length>0) e[0].focus();
+        this.focusKeyboard=null;this.tabIndex=0;
+      }
+      
       if(e.key=='F4'){
-        this.barcode = "";
-        var barcodeId = document.getElementById("barcode");
-        barcodeId.focus();
-        setTimeout(function(){
-          barcodeId.value = "";
-        });
+        this.onFocusProduct();
       }
-      if (document.activeElement && e.code === "ArrowDown" && this.focusKeyboard=='') {
-        let e = [...document.querySelectorAll('[tabindex]')],
-            i = e.indexOf(document.activeElement) + 1;
-        i = i === e.length ? i = 0 : i;
-        e[i].focus()
+      
+      let el = [...document.querySelectorAll('[tabindex]')];
+      console.log('tab '+ this.tabIndex);
+      if (document.activeElement && e.code === "ArrowDown" && this.focusKeyboard==null) {
+        let i = el.indexOf(document.activeElement) + 1;
+        i = i === el.length ? i = 0 : i;
+        el[i].focus()
         this.tabIndex = i;
-      }
-
-      if(e.key=='Enter'){
-        
+      }else if (document.activeElement && e.code === "ArrowUp" && this.focusKeyboard==null) {
+        let  k = el.indexOf(document.activeElement) - 1;
+        k = k == -1 ? k = 0 : k;
+        el[k].focus()
+        this.tabIndex = k;
       }
 
       if(e.key=='F8'){
+        this.focusKeyboard='F8';
         this.modalKredit();
       }
       if(e.key=='F10'){
+        this.focusKeyboard='F10';
         this.modalTunai();
-        setTimeout(function(){
-          document.getElementById("uang_tunai").focus();
-        });
+      }
+
+      /**
+       * Untuk edit produk menggunakan keybord arah panah atau bawah dan enter 
+       */
+      if(e.key=='Enter' && this.focusKeyboard==null && this.tabIndex!=null){
+        this.focusKeyboard = 'EditProduct';
+        openModal(ModalEditProduct,{product:this.dataProduct[this.tabIndex]});
       }
     },
     loadProduct(){
@@ -99,9 +133,8 @@ export default {
       });
     },
     selectedItem(item) {
-      item['qty_beli'] = this.qty;
-      
       var skipThis=false;
+      
       for(let i=0; i<this.dataProduct.length; i++){
         if(this.dataProduct[i]['id']==item['id']){
           this.dataProduct[i]['qty_beli'] = this.dataProduct[i]['qty_beli'] + this.qty;
@@ -109,9 +142,12 @@ export default {
         }
       }
 
-      if(skipThis==false) this.dataProduct.push(item);
-      
-      this.qty = 1; this.focusKeyboard='';this.barcode='';
+      if(skipThis==false) {
+        item['qty_beli'] = this.qty;
+        this.dataProduct.push(item);
+      }
+
+      this.qty = 1; this.focusKeyboard=null;this.barcode='';
       setTimeout(function(){
         document.getElementById("barcode").value='';
       });
@@ -127,12 +163,7 @@ export default {
         this.total_qty += this.dataProduct[i]['qty_beli'];
         this.total += this.dataProduct[i]['qty_beli'] * this.dataProduct[i]['harga_number'];
       }
-		},
-    onFocus(){
-      setTimeout(function(){
-        document.getElementById("barcode").value='';this.focusKeyboard='F4';
-      });
-    }
+		}
   }
 };
 </script>
@@ -151,7 +182,7 @@ export default {
                     placeholder="(F4)"
                     :items="listProduct"
                     :minInputLength="1"
-                    @focus="onFocus" 
+                    @focus="onFocusProduct" 
                     @selectItem="selectedItem"
                     class="form-control"
                     ref="typeahead"
@@ -209,7 +240,7 @@ export default {
               <h5>Rp. {{$filters.formatNumber(total)}}</h5>
               <hr />
             </div>
-            <div class="row">
+            <div class="row" v-if="total>0">
               <div class="col-md-6 d-grid gap-2">
                 <button type="button" class="btn btn-primary" @click="modalTunai">Tunai (F10)</button>
               </div>

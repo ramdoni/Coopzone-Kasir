@@ -10,17 +10,20 @@ import "bootstrap";
 import 'vue3-simple-typeahead/dist/vue3-simple-typeahead.css'; //Optional default CSS
 import SimpleTypeahead from 'vue3-simple-typeahead';
 import mitt from "mitt";
+import Notifications from '@kyvg/vue3-notification'
 
 const app = createApp(App);
 const emitter = mitt();
 app.config.globalProperties.emitter = emitter;
 app.config.globalProperties.emitter.emit("modal-transaksi-done", false);
+app.config.globalProperties.emitter.emit("modal-edit-product",{});
 app.config.globalProperties.$filters = {
     formatNumber(number: number | bigint) {
         return Intl.NumberFormat().format(number);
     }
 }
 
+app.use(Notifications);
 app.use(SimpleTypeahead);
 app.use(createPinia());
 app.use(router);

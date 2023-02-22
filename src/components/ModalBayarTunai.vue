@@ -3,16 +3,18 @@ import axios from 'axios';
 export default ({
   data(){
     return {
-      uang_tunai:0,
+      uang_tunai:null,
       uang_kembali:0,
       error:'',
     };
   },
-  // emits:["finishTransaction"],
   props: {
     total: Number,
     products: Array,
     modal: Object
+  },
+  mounted(){
+    document.getElementById("uang_tunai").focus();
   },
   methods:{
     submit(){
@@ -69,10 +71,6 @@ export default ({
           <hr />
           
         </div>
-      </div>
-      <hr />
-      <div class="form-group">
-        <button type="submit" class="btn btn-primary" style="width: 200px">Bayar</button>
       </div>
     </div>
   </template>

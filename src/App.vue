@@ -19,12 +19,12 @@ export default {
                 <li class="nav-item">
                   <RouterLink to="/"  class="nav-link active">Kasir</RouterLink>
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                   <RouterLink class="nav-link" to="/product">Produk</RouterLink>
                 </li>
                 <li class="nav-item">
                     <RouterLink to="/Transaksi" class="nav-link">Transaksi</RouterLink>
-                </li>
+                </li> -->
               </ul>
             </div>
           </div>
@@ -32,6 +32,11 @@ export default {
       </div>
     </header>
     <RouterView />
+    <notifications
+      position="top center"
+      :max="3"
+      :width="400"
+    />
+    <widget-container-modal />
   </div>
-  <widget-container-modal />
 </template>
