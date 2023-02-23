@@ -132,6 +132,10 @@ export default {
         .catch(function (error) { console.log(error);});
       });
     },
+    edit_product(key){
+      this.focusKeyboard = 'EditProduct';
+      openModal(ModalEditProduct,{product:this.dataProduct[key]});
+    },
     selectedItem(item) {
       var skipThis=false;
       
@@ -212,7 +216,7 @@ export default {
                 </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(item,index) in dataProduct" :key="index" :tabindex="index">
+                  <tr v-for="(item,index) in dataProduct" :key="index" :tabindex="index" @click="edit_product(index)" style="cursor: pointer">
                     <td>{{index+1}}</td>
                     <td>{{item.barcode}}</td>
                     <td>{{item.keterangan}}</td>
