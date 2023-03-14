@@ -15,6 +15,27 @@ const router = createRouter({
       component: () => import("../views/TransaksiView.vue"),
     },
     {
+      path: "/transaksi/detail/:id",
+      name: "transaksi-detail",
+      component: () => import("../views/TransaksiDetailView.vue")
+    },
+
+    {
+      path: "/kasir-coopzone",
+      name: "kasir-coopzone-home",
+      component: HomeView,
+    },
+    {
+      path: "/kasir-coopzone/transaksi",
+      name: "kasir-coopzone-transaksi",
+      component: () => import("../views/TransaksiView.vue"),
+    },
+    {
+      path: "/kasir-coopzone/transaksi/detail/:id",
+      name: "kasir-coopzone-transaksi-detail",
+      component: () => import("../views/TransaksiDetailView.vue"),
+    },
+    {
       path : "/product",
       name : "product",
       component: () => import("../views/ProductView.vue")

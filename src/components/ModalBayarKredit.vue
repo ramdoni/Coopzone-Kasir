@@ -8,6 +8,9 @@ export default ({
       anggota:null,
       error:'',
       focusKeyboard:null,
+      isPrint:false,
+      isFocus:"",
+      isSubmit:false
     };
   },
   props: {
@@ -16,20 +19,28 @@ export default ({
     modal: Object
   },
   created () {
-    this.loadAnggota();
+    document.addEventListener("keydown", this.onKeydown);
   },
   mounted(){
+    this.loadAnggota();
     document.addEventListener("keydown", this.onKeydown);
-    document.getElementById("no_anggota").focus();
   },
   methods:{
+    setFocus(){
+      this.no_anggota=null;this.anggota=null;this.focusKeyboard='F8';
+      document.getElementById("no_anggota").value="";
+      setTimeout(function(){
+        document.getElementById("no_anggota").focus();
+      },500)
+    },
     onKeydown(e){
       if(e.key=='F8'){
-        this.onFocus();
+        this.setFocus();
       }
       if(e.key=='Enter' && this.focusKeyboard==null && this.total>0){
         this.submit();
       }
+      this.focusKeyboard = e.key;
     },
     loadAnggota(){
       this.$nextTick(function () {
@@ -41,11 +52,9 @@ export default ({
         .catch(function (error) { console.log(error);});
       });
     },
-    onFocus(){
-      this.no_anggota=null;this.anggota=null;this.focusKeyboard='F8';
-      setTimeout(function(){
-        document.getElementById("no_anggota").value="";
-      },500);
+    submitAndPrint(){
+      this.isPrint = true;
+      this.submit();
     },
     submit(){
       if(this.anggota==null){
@@ -60,16 +69,20 @@ export default ({
         this.error = "Saldo tidak mencukupi.";
         return;
       }
-
+      this.isSubmit=true;
       axios.post(import.meta.env.VITE_API_URL + 'store-transaction', {
           token: import.meta.env.VITE_API_TOKEN,
           items: this.products,
-          metode_pembayaran: 3, // Kredit atau Bayar Nanti
+          metode_pembayaran: 3, //Kredit atau Bayar Nanti
           total: this.total,
           anggota_id: this.anggota.id
         })
         .then(response => (this.transactionSuccess(response.data)))
-        .catch(function (error) { console.log(error);});
+        .catch(error=> { });
+    },
+    transactionFailed(error){
+      this.isSubmit=false;
+      this.error = error;
     },
     selectItem(item){
       this.anggota = item;
@@ -78,25 +91,23 @@ export default ({
       },500);
     },
     transactionSuccess(data){
+      this.isSubmit=false;
       if(data.status=='failed'){
         this.error = data.message;
         return;
       }
-      this.anggota=null;this.no_anggota=null;
+      this.anggota=null;this.no_anggota=null;this.focusKeyboard='F4';
       this.emitter.emit("modal-transaksi-done", true);
-    }
-  },
-  watch: {
-    uang_tunai(){
-      if(this.uang_tunai>0){
-        this.uang_kembali = this.uang_tunai - this.total;
-      }
+      // this.$emit('close-modal');
+      // this.$emit('clear-transaksi');
+      window.location.href = '/kasir-coopzone';
     }
   }
 });
 </script>
 <template>
-    <div class="modal-tunai">
+  <div class="widget__modal-container__item modal-container">
+    <div class="modal-tunai"  style="z-index:9999">
       <h4>Pembayaran Kredit</h4>
       <hr />
       <div class="alert alert-danger" v-if="error!=''">{{error}}</div>
@@ -105,15 +116,15 @@ export default ({
           <div class="form-group">
             <label>Nomor / Nama Anggota (F8)</label>
             <vue3-simple-typeahead
+              autofocus
               v-model="no_anggota"
               id="no_anggota"
               placeholder=""
               :items="listAnggota"
               :minInputLength="1"
-              @focus="onFocus"
+              @focus="setFocus"
               @selectItem="selectItem"
               class="form-control"
-              ref="typeahead"
               :itemProjection="
                   (item) => {
                     return item.text;
@@ -134,11 +145,26 @@ export default ({
             <hr />
           </div>
         </div>
-        
       </div>
       <div class="clearfix"></div>
-      <div class="form-group">
-        <button type="submit" class="btn btn-primary" style="width: 200px">Bayar (Enter)</button>
+      <div class="form-group row">
+        <div v-if="isSubmit">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          Submit Data
+        </div>
+        <div class="col-md-6">
+          <button type="submit" v-if="isSubmit==false" @click="submit" class="btn btn-success col-md-12">Bayar (Enter)</button>
+        </div>
+        <div class="col-md-6">
+          <button type="button" v-if="isSubmit==false" @click="$emit('close-modal')" class="btn btn-danger col-md-12">Batal</button>
+        </div>
+
+        <!-- <div class="col-md-6 text-right">
+          <button type="submit" @click="submitAndPrint" class="btn btn-info float-end" style="width: 200px">Bayar & Print</button>
+        </div> -->
       </div>
     </div>
-  </template>
+  </div>
+</template>

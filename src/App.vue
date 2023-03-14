@@ -16,15 +16,15 @@ export default {
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
               <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                  <RouterLink to="/"  class="nav-link active">Kasir</RouterLink>
+                <li class="nav-item px-2" :class="this.$route.name">
+                  <RouterLink to="/kasir-coopzone"  class="nav-link">Kasir</RouterLink>
                 </li>
                 <!-- <li class="nav-item">
                   <RouterLink class="nav-link" to="/product">Produk</RouterLink>
+                </li>-->
+                <li class="nav-item px-2" :class="this.$route.name">
+                    <RouterLink to="/kasir-coopzone/transaksi" class="nav-link">Transaksi</RouterLink>
                 </li>
-                <li class="nav-item">
-                    <RouterLink to="/Transaksi" class="nav-link">Transaksi</RouterLink>
-                </li> -->
               </ul>
             </div>
           </div>
